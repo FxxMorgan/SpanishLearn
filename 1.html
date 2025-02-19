@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aprende Español - Vocabulario</title>
+  
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  
+  <!-- jQuery -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  
+  <!-- Toastr -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-100 font-sans">
+  <!-- Header -->
+  <header class="header-gradient text-white py-6 text-center">
+    <h1 class="text-4xl font-bold">Aprende Español</h1>
+    <p class="mt-2 text-lg">¡Aprendamos juntos! / Let's learn together!</p>
+    <div class="mt-4 space-x-4">
+      <button onclick="changeLevel('basic')" class="btn-primary">Básico</button>
+      <button onclick="changeLevel('intermediate')" class="btn-primary">Intermedio</button>
+    </div>
+  </header>
+
+  <!-- Progress Section -->
+  <div class="container mx-auto px-4 py-4">
+    <div class="card">
+      <h3 class="text-lg font-semibold mb-2">Tu Progreso / Your Progress</h3>
+      <div class="w-full bg-gray-200 rounded-full h-4">
+        <div id="progress-bar" class="bg-green-500 h-4 rounded-full progress-bar" style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-8">
+    <!-- Vocabulary Cards -->
+    <section id="vocabulary-section" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <!-- Cards will be dynamically inserted here -->
+    </section>
+
+    <!-- Practice Section -->
+    <section class="mt-8 card">
+      <h3 class="text-2xl font-bold mb-4">Práctica / Practice</h3>
+      <div id="quiz-container" class="quiz-container">
+        <!-- Quiz content will be dynamically inserted here -->
+      </div>
+      <button onclick="checkAnswers()" class="btn-secondary mt-6 w-full sm:w-auto">
+        Verificar Respuestas / Check Answers
+      </button>
+    </section>
+
+    <!-- Daily Challenge -->
+    <section class="mt-8 card">
+      <h3 class="text-2xl font-bold mb-4">Desafío Diario / Daily Challenge</h3>
+      <div id="daily-challenge" class="text-center p-4">
+        <p class="text-lg mb-4">Completa esta frase / Complete this phrase:</p>
+        <p id="challenge-phrase" class="text-xl font-bold mb-4"></p>
+        <input type="text" id="challenge-answer" class="input-primary mb-4" placeholder="Tu respuesta / Your answer">
+        <button onclick="checkDailyChallenge()" class="btn-secondary">
+          Enviar Respuesta / Submit Answer
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-gray-800 text-white py-6 text-center mt-8">
+    <p class="text-lg">Hecho con ❤️ para ayudarte a aprender español.</p>
+    <p class="mt-2">Made with love to help you learn Spanish.</p>
+  </footer>
+
+  <script>
+    // Vocabulary data
+    const vocabularyData = {
+      basic: [
+        { spanish: "HOLA", english: "Hello", example: "¡Hola! ¿Cómo estás?" },
+        { spanish: "GRACIAS", english: "Thank you", example: "¡Muchas gracias!" },
+        { spanish: "ADIOS", english: "Goodbye", example: "¡Adiós, hasta luego!" },
+        { spanish: "POR FAVOR", english: "Please", example: "Por favor, ayúdame." },
+        { spanish: "BUENOS DÍAS", english: "Good morning", example: "¡Buenos días!" },
+        { spanish: "BUENAS NOCHES", english: "Good night", example: "¡Buenas noches!" }
+      ],
+      intermediate: [
+        { spanish: "DESARROLLADOR", english: "Developer", example: "Soy desarrollador de software." },
+        { spanish: "APRENDER", english: "To learn", example: "Quiero aprender español." },
+        { spanish: "PROGRAMACIÓN", english: "Programming", example: "Me gusta la programación." },
+        { spanish: "TECNOLOGÍA", english: "Technology", example: "La tecnología avanza rápidamente." },
+        { spanish: "PROYECTO", english: "Project", example: "Este es mi proyecto." },
+        { spanish: "COLABORACIÓN", english: "Collaboration", example: "La colaboración es importante." }
+      ]
+    };
+
+    let currentLevel = 'basic';
+    let progress = 0;
+
+    // Initialize the page
+    function init() {
+      loadVocabulary();
+      loadQuiz();
+      loadDailyChallenge();
+      updateProgress();
+    }
+
+    // Load vocabulary cards
+    function loadVocabulary() {
+      const container = document.getElementById('vocabulary-section');
+      container.innerHTML = '';
+      
+      vocabularyData[currentLevel].forEach(word => {
+        const card = `
+          <div class="flip-card fade-in">
+            <div class="flip-card-inner">
+              <div class="flip-card-front card flex flex-col justify-center items-center">
+                <h2 class="text-2xl font-bold mb-2">${word.spanish}</h2>
+                <p class="text-gray-600">Hover to reveal / Pasa el ratón para revelar</p>
+              </div>
+              <div class="flip-card-back bg-blue-600 text-white flex flex-col justify-center items-center">
+                <h2 class="text-2xl font-bold mb-2">${word.english}</h2>
+                <p class="text-sm mt-2">Example / Ejemplo:</p>
+                <p class="italic">${word.example}</p>
+              </div>
+            </div>
+          </div>
+        `;
+        container.innerHTML += card;
+      });
+    }
+
+    // Load quiz questions
+    function loadQuiz() {
+      const container = document.getElementById('quiz-container');
+      container.innerHTML = '';
+      
+      const words = vocabularyData[currentLevel];
+      const shuffled = [...words].sort(() => Math.random() - 0.5).slice(0, 3);
+      
+      shuffled.forEach(word => {
+        const options = [word.english, ...words
+          .filter(w => w !== word)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 2)
+          .map(w => w.english)
+        ].sort(() => Math.random() - 0.5);
+
+        const question = `
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <p class="quiz-question">${word.spanish}</p>
+            <select class="quiz-select" data-correct="${word.english}">
+              <option value="">Selecciona... / Select...</option>
+              ${options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+            </select>
+          </div>
+        `;
+        container.innerHTML += question;
+      });
+    }
+
+    // Check quiz answers
+    function checkAnswers() {
+      const answers = document.querySelectorAll('.quiz-select');
+      let correct = 0;
+      let total = answers.length;
+
+      answers.forEach(answer => {
+        if (answer.value === answer.dataset.correct) {
+          correct++;
+        }
+      });
+
+      progress = Math.min(100, progress + (correct / total) * 20);
+      updateProgress();
+
+      toastr.options = {
+        "closeButton": true,
+        "progressBar": true
+      };
+
+      if (correct === total) {
+        toastr.success('¡Perfecto! / Perfect!', '¡Muy bien! / Well done!');
+      } else {
+        toastr.warning(`${correct} de ${total} correctas. ¡Sigue intentando! / ${correct} out of ${total} correct. Keep trying!`);
+      }
+    }
+
+    // Load daily challenge
+    function loadDailyChallenge() {
+      const phrases = [
+        { incomplete: "Buenos ___ (Good morning)", answer: "días" },
+        { incomplete: "Muchas ___ (Thank you very much)", answer: "gracias" },
+        { incomplete: "Hasta ___ (See you later)", answer: "luego" }
+      ];
+      
+      const todayPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+      document.getElementById('challenge-phrase').textContent = todayPhrase.incomplete;
+      document.getElementById('challenge-answer').dataset.correct = todayPhrase.answer;
+    }
+
+    // Check daily challenge
+    function checkDailyChallenge() {
+      const input = document.getElementById('challenge-answer');
+      const correct = input.dataset.correct;
+      
+      if (input.value.toLowerCase().trim() === correct.toLowerCase()) {
+        toastr.success('¡Correcto! / Correct!');
+        progress = Math.min(100, progress + 10);
+        updateProgress();
+      } else {
+        toastr.error('¡Inténtalo de nuevo! / Try again!');
+      }
+    }
+
+    // Change difficulty level
+    function changeLevel(level) {
+      currentLevel = level;
+      loadVocabulary();
+      loadQuiz();
+    }
+
+    // Update progress bar
+    function updateProgress() {
+      document.getElementById('progress-bar').style.width = `${progress}%`;
+    }
+
+    // Initialize the page
+    init();
+  </script>
+</body>
+</html>
